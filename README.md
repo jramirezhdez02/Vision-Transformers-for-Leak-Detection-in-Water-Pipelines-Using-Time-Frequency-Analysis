@@ -1,4 +1,4 @@
-# 🔊 Water Pipe Leak Detection with Vision Transformers
+# Water Pipe Leak Detection with Vision Transformers
 
 > **Bachelor's Thesis · Jorge Ramírez Hernández**
 > Leak detection in water pipelines using time-frequency representations and Vision Transformers (ViT).
