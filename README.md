@@ -1,26 +1,26 @@
 # 🔊 Water Pipe Leak Detection with Vision Transformers
 
-> **Tesis de Licenciatura · Jorge Ramírez Hernández**  
-> Detección de fugas en tuberías de agua mediante representaciones tiempo-frecuencia y Vision Transformers (ViT).
+> **Bachelor's Thesis · Jorge Ramírez Hernández**
+> Leak detection in water pipelines using time-frequency representations and Vision Transformers (ViT).
 
 ---
 
 ## Overview
 
-Pipeline completo para la tesis *"Detección de Fugas en Tuberías de Agua Mediante Transformadores de Visión"*.
+Complete pipeline for the thesis *"Leak Detection in Water Pipelines Using Vision Transformers"*.
 
-La idea central es convertir **señales acústicas 1-D** en **imágenes tiempo-frecuencia 2-D**
-(escalogramas o espectrogramas) y clasificarlas con un **Vision Transformer (ViT)**.
+The central idea is to convert **1-D acoustic signals** into **2-D time-frequency images**
+(scalograms or spectrograms) and classify them with a **Vision Transformer (ViT)**.
 
 ```
-Señal acústica cruda
+Raw acoustic signal
         │
         ▼
-  Wavelet Denoising  (db4, nivel 3)
+  Wavelet Denoising  (db4, level 3)
         │
-        ├──── CWT  →  Escalograma   (50 × 2048)
+        ├──── CWT  →  Scalogram       (50 × 2048)
         │
-        └──── STFT →  Log-Espectrograma  (272 × 112)
+        └──── STFT →  Log-Spectrogram (272 × 112)
                              │
                              ▼
                      Vision Transformer
@@ -32,71 +32,71 @@ Señal acústica cruda
                      └───────────────────┘
                              │
                   ┌──────────┴──────────┐
-              Binario               Multiclase
-          (fuga / no-fuga)   (no-fuga + 4 tipos de fuga)
+              Binary               Multiclass
+          (leak / no-leak)   (no-leak + 4 leak types)
 ```
 
 ---
 
 ## Dataset
 
-Señales acústicas grabadas en dos topologías de tubería a **25 600 Hz**.
+Acoustic signals recorded in two pipe topologies at **25,600 Hz**.
 
-| Topología | Descripción |
-|-----------|-------------|
-| **Branched** | Red de tuberías con bifurcaciones en T |
-| **Looped** | Red de tuberías en circuito cerrado |
+| Topology | Description |
+|----------|-------------|
+| **Branched** | Pipe network with T-junctions |
+| **Looped** | Closed-loop pipe network |
 
-**Clases (tarea multiclase):**
+**Classes (multiclass task):**
 
-| Label | Carpeta en el dataset |
-|-------|-----------------------|
+| Label | Folder in dataset |
+|-------|-------------------|
 | 0 | Circumferential Crack |
 | 1 | Gasket Leak |
 | 2 | Longitudinal Crack |
 | 3 | No-leak |
 | 4 | Orifice Leak |
 
-Fuente: [Mendeley Data — Water Pipe Leakage Detection](https://data.mendeley.com)
+Source: [Mendeley Data — Water Pipe Leakage Detection](https://data.mendeley.com)
 
 ---
 
-## Matriz de experimentos
+## Experiment Matrix
 
-16 experimentos cubriendo todas las combinaciones de:
+16 experiments covering all combinations of:
 
-| Eje | Opciones |
-|-----|----------|
-| Transformada tiempo-frecuencia | CWT · STFT |
-| Topología de tubería | Branched · Looped |
-| Tarea de clasificación | Binaria · Multiclase |
-| Inicialización del modelo | Scratch · Preentrenado ImageNet (ViT-B/16) |
+| Axis | Options |
+|------|---------|
+| Time-frequency transform | CWT · STFT |
+| Pipe topology | Branched · Looped |
+| Classification task | Binary · Multiclass |
+| Model initialization | Scratch · Pretrained ImageNet (ViT-B/16) |
 
 ---
 
-## Estructura del repositorio
+## Repository Structure
 
 ```
-├── train.py                    # Punto de entrada único para los 16 experimentos
-├── test_pipeline.py            # Tests con datos sintéticos (sin dataset real)
+├── train.py                    # Single entry point for all 16 experiments
+├── test_pipeline.py            # Tests with synthetic data (no real dataset required)
 │
 ├── src/
 │   ├── data/
 │   │   ├── preprocessing.py   # WaveletDenoising, denoise_signal_batch
-│   │   ├── transforms.py      # Escalogramas CWT + espectrogramas STFT
+│   │   ├── transforms.py      # CWT scalograms + STFT spectrograms
 │   │   └── dataset.py         # Dataset, DataLoader factory, label maps
 │   ├── models/
 │   │   └── vit.py             # VisionTransformer (scratch) + PretrainedViT + build_model()
 │   ├── training/
-│   │   └── trainer.py         # Loop de entrenamiento, early stopping, checkpoints
+│   │   └── trainer.py         # Training loop, early stopping, checkpoints
 │   └── utils/
 │       └── metrics.py         # Confusion matrix, ROC, PR, classification report
 │
 ├── configs/
-│   └── default.yaml           # Hiperparámetros por defecto
+│   └── default.yaml           # Default hyperparameters
 │
 ├── docs/
-│   └── guia_colab.md          # Guía paso a paso para correr en Google Colab
+│   └── guia_colab.md          # Step-by-step guide for running on Google Colab
 │
 ├── requirements.txt
 └── .gitignore
@@ -104,79 +104,79 @@ Fuente: [Mendeley Data — Water Pipe Leakage Detection](https://data.mendeley.c
 
 ---
 
-## Pipeline de datos
+## Data Pipeline
 
-El pipeline está diseñado para no cargar el dataset completo en RAM en ningún momento,
-lo que lo hace estable en entornos con memoria limitada como Google Colab.
+The pipeline is designed to never load the full dataset into RAM at once,
+making it stable in memory-constrained environments like Google Colab.
 
 ```
-CSVs del dataset Mendeley
+Mendeley dataset CSVs
         │
         ▼
-load_signals_from_csv()          # Lee frames de 1 segundo, balancea clases
+load_signals_from_csv()          # Reads 1-second frames, balances classes
         │
         ▼
-denoise_signal_batch()           # Wavelet denoising señal por señal
+denoise_signal_batch()           # Wavelet denoising signal by signal
         │
         ▼
-CWT / STFT                       # Una imagen a la vez
+CWT / STFT                       # One image at a time
         │
         ▼
-cache .h5 en Drive               # Escrita imagen por imagen (sin pico de RAM)
+cache .h5 to Drive               # Written image by image (no RAM spike)
         │
         ▼
-HDF5Dataset (lazy)               # Lee del .h5 bajo demanda, batch por batch
+HDF5Dataset (lazy)               # Reads from .h5 on demand, batch by batch
         │
         ▼
 DataLoader → ViT → train()
 ```
 
-El archivo `.h5` se calcula una vez y se reutiliza en todas las ejecuciones
-siguientes de la misma combinación `transform + topology + task`.
-Los experimentos scratch y pretrained comparten el mismo cache.
+The `.h5` file is computed once and reused across all subsequent runs
+of the same `transform + topology + task` combination.
+Scratch and pretrained experiments share the same cache.
 
 ---
 
-## Quick start
+## Quick Start
 
-### 1 · Instalar dependencias
+### 1 · Install dependencies
 
 ```bash
-sudo apt-get install libfftw3-single3   # requerido por fCWT
+sudo apt-get install libfftw3-single3   # required by fCWT
 pip install -r requirements.txt
 pip install fCWT
 ```
 
-### 2 · Verificar instalación
+### 2 · Verify installation
 
 ```bash
 python test_pipeline.py --full
-# Debe imprimir: 9 pasados | 0 fallidos
+# Should print: 9 passed | 0 failed
 ```
 
-### 3 · Correr un experimento
+### 3 · Run an experiment
 
-`train.py` es el único punto de entrada para los 16 experimentos:
+`train.py` is the single entry point for all 16 experiments:
 
 ```bash
-# ViT desde cero | STFT | Branched | Binario
+# ViT from scratch | STFT | Branched | Binary
 python train.py --transform stft --topology branched --task binary \
-    --data_dir /ruta/al/Dataset --cache_dir /ruta/al/cache
+    --data_dir /path/to/Dataset --cache_dir /path/to/cache
 
-# ViT desde cero | CWT | Looped | Multiclase
+# ViT from scratch | CWT | Looped | Multiclass
 python train.py --transform cwt --topology looped --task multiclass \
-    --data_dir /ruta/al/Dataset --cache_dir /ruta/al/cache
+    --data_dir /path/to/Dataset --cache_dir /path/to/cache
 
-# ViT preentrenado (ImageNet) | STFT | Branched | Binario
+# Pretrained ViT (ImageNet) | STFT | Branched | Binary
 python train.py --transform stft --topology branched --task binary --pretrained \
-    --data_dir /ruta/al/Dataset --cache_dir /ruta/al/cache
+    --data_dir /path/to/Dataset --cache_dir /path/to/cache
 
-# Sobrescribir hiperparámetros
+# Override hyperparameters
 python train.py --transform cwt --topology looped --task multiclass \
     --lr 5e-5 --epochs 100 --batch_size 16
 ```
 
-Outputs guardados en `checkpoints/{transform}_{topology}_{task}_{model}/`:
+Outputs saved to `checkpoints/{transform}_{topology}_{task}_{model}/`:
 
 ```
 checkpoints/stft_branched_binary_scratch/
@@ -189,71 +189,71 @@ checkpoints/stft_branched_binary_scratch/
 
 ### 4 · Google Colab
 
-Ver [`docs/guia_colab.md`](docs/guia_colab.md) para instrucciones paso a paso,
-incluyendo cómo activar GPU, manejo del cache en Drive y solución de problemas.
+See [`docs/guia_colab.md`](docs/guia_colab.md) for step-by-step instructions,
+including how to enable GPU, manage the Drive cache, and troubleshoot issues.
 
 ---
 
-## Arquitectura del modelo
+## Model Architecture
 
-### ViT desde cero
+### ViT from Scratch
 
-| Hiperparámetro | Valor |
+| Hyperparameter | Value |
 |----------------|-------|
 | Embedding dim | 768 |
-| Profundidad (bloques) | 10 |
+| Depth (blocks) | 10 |
 | Attention heads | 8 |
 | MLP ratio | 4× |
 | Dropout | 0.15 |
 | Attention dropout | 0.05 |
-| Optimizador | AdamW |
+| Optimizer | AdamW |
 | LR scheduler | ReduceLROnPlateau |
 
-### ViT preentrenado
+### Pretrained ViT
 
-- Backbone: **ViT-Base/16** (pesos ImageNet-21k via `timm`)
-- Las imágenes se redimensionan a 224 × 224 con interpolación bilineal
-- El canal único (escala de grises) se replica a 3 canales (RGB) antes del backbone
-- Solo la cabeza de clasificación se reemplaza y entrena desde cero
+- Backbone: **ViT-Base/16** (ImageNet-21k weights via `timm`)
+- Images are resized to 224 × 224 with bilinear interpolation
+- Single (grayscale) channel is replicated to 3 channels (RGB) before the backbone
+- Only the classification head is replaced and trained from scratch
 
-### Shapes de entrada por transformada
+### Input Shapes by Transform
 
-| Transformada | Shape imagen | Patch size | Nº patches |
-|-------------|-------------|------------|-----------|
+| Transform | Image shape | Patch size | No. patches |
+|-----------|-------------|------------|-------------|
 | CWT | 50 × 2048 | 5 × 16 | 10 × 128 = 1280 |
 | STFT | 272 × 112 | 8 × 8 | 34 × 14 = 476 |
 
 ---
 
-## Dependencias
+## Dependencies
 
-| Librería | Propósito |
+| Library | Purpose |
 |---------|---------|
 | `torch` / `torchvision` | Deep learning |
-| `timm` | Backbone ViT-B/16 preentrenado |
+| `timm` | Pretrained ViT-B/16 backbone |
 | `PyWavelets` | Wavelet denoising + CWT fallback |
-| `fCWT` | CWT rápida (GPU/CPU) |
+| `fCWT` | Fast CWT (GPU/CPU) |
 | `scipy` | STFT |
-| `h5py` | Cache de imágenes en HDF5 |
-| `scikit-learn` | Métricas, splits estratificados |
-| `seaborn` | Visualización de confusion matrix |
+| `h5py` | Image cache in HDF5 |
+| `scikit-learn` | Metrics, stratified splits |
+| `seaborn` | Confusion matrix visualization |
 
 ---
 
-## Citación
+## Citation
 
 ```bibtex
-@thesis{ramirez2024leak,
+@thesis{ramirez2025leak,
   author  = {Ramírez Hernández, Jorge},
-  title   = {Detección de Fugas en Tuberías de Agua Mediante Transformadores de Visión},
-  school  = {[Universidad]},
-  year    = {2024},
-  type    = {Tesis de Licenciatura}
+  title   = {Leak Detection in Water Pipelines Using Vision Transformers},
+  school  = {[University]},
+  year    = {2025},
+  type    = {Bachelor's Thesis}
 }
 ```
 
 ---
 
-## Licencia
+## License
 
-MIT — ver [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
