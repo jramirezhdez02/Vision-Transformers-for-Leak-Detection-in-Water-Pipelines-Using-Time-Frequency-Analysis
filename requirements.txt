@@ -1,0 +1,29 @@
+# Core scientific stack
+numpy>=1.24
+scipy>=1.11
+pandas>=2.0
+matplotlib>=3.7
+seaborn>=0.12
+tqdm>=4.65
+
+# PyTorch — install the CUDA variant that matches your driver
+# https://pytorch.org/get-started/locally/
+torch>=2.0
+torchvision>=0.15
+
+# Wavelet / time-frequency
+PyWavelets>=1.4
+fCWT>=0.1.19          # fast GPU/CPU CWT; requires libfftw3-single3
+                      # apt-get install libfftw3-single3
+
+# Pretrained ViT backbone
+timm>=0.9
+
+# HDF5 I/O
+h5py>=3.9
+
+# Metrics
+scikit-learn>=1.3
+
+# Config parsing (optional, for YAML configs)
+pyyaml>=6.0

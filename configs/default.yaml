@@ -1,0 +1,64 @@
+# configs/default.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+# Default configuration for the water-pipe leak detection pipeline.
+# Override individual keys in your experiment-specific config files.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Data ─────────────────────────────────────────────────────────────────────
+data:
+  dataset: "branched"          # "branched" | "looped"
+  data_dir: "data/raw"         # path to raw HDF5 / CSV files
+  cache_dir: "data/processed"  # path to save computed scalograms / spectrograms
+  original_sr: 25600           # original sampling rate (Hz)
+  signal_sr: 25600             # target sampling rate (Hz; set < original for downsampling)
+  val_split: 0.10              # fraction of train data held out for validation
+  batch_size: 32
+  num_workers: 2
+  seed: 42
+
+# ── Preprocessing ─────────────────────────────────────────────────────────────
+preprocessing:
+  denoise: true
+  wavelet: "db4"
+  level: 3
+  thr_mode: "soft"             # "soft" | "hard"
+  threshold_method: "universal" # "universal" | "bayes"
+  padding_mode: "symmetric"    # "symmetric" | "reflect" | "zero" | "none"
+
+# ── Transform ─────────────────────────────────────────────────────────────────
+transform:
+  type: "cwt"                  # "cwt" | "stft"
+
+  # CWT-specific
+  cwt:
+    library: "fcwt"            # "fcwt" | "pywt"
+    f0: 100                    # min frequency (Hz)
+    f1: 12800                  # max frequency (Hz)
+    fn: 50                     # number of voices
+
+  # STFT-specific
+  stft:
+    frame_ms: 20               # frame length in ms  → 512 samples @ 25.6 kHz
+    shift_ms: 10               # frame shift in ms   → 256 samples @ 25.6 kHz
+
+# ── Model ─────────────────────────────────────────────────────────────────────
+model:
+  type: "scratch"              # "scratch" | "pretrained"
+  task: "binary"               # "binary"  | "multiclass"
+
+  # ViT from-scratch hyperparameters
+  vit:
+    embed_dim: 768
+    depth: 10
+    num_heads: 8
+    mlp_ratio: 4.0
+    drop_rate: 0.15
+    attn_drop_rate: 0.05
+
+# ── Training ──────────────────────────────────────────────────────────────────
+training:
+  num_epochs: 50
+  lr: 1.0e-4
+  weight_decay: 1.0e-4
+  patience: 10                 # early-stopping patience
+  save_dir: "checkpoints"
