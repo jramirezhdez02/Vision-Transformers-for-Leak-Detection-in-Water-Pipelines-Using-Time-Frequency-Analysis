@@ -1,7 +1,7 @@
 # 🔊 Water Pipe Leak Detection with Vision Transformers
 
-> **Tesis de Licenciatura · Jorge Ramírez Hernández**  
-> Detección de fugas en tuberías de agua mediante representaciones tiempo-frecuencia y Vision Transformers (ViT).
+> **Engineering Thesis · Jorge Ramírez Hernández**  
+> Leak detection in water pipelines using time–frequency representations and Vision Transformers (ViT).
 
 ---
 
